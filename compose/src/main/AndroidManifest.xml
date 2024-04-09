@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <activity
+            android:name="com.example.compose.ComposeSurfaceActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.compose.ComposableCodeLabActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.compose.CodeLabComposeBasicLayoutActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.compose.CodeLabComposeStateActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.compose.SimpleComposableActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.compose.CodeLabComposeLazyLayoutsActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.compose.CodeLabStylingTextActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.compose.CodeLabSimpleAnimationsActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.compose.CodeLabComposeDrawingActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.example.compose.CodeLabAdvancedLayoutsActivity"
+            android:exported="false" />
+    </application>
+
+</manifest>
