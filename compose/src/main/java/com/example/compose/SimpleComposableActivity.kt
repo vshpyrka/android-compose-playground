@@ -1,17 +1,34 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.compose
 
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.Gravity
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,6 +37,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidthIn
 import androidx.compose.foundation.layout.size
@@ -27,32 +45,58 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContactMail
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import com.example.compose.ui.theme.AndroidPlaygroundTheme
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import kotlin.math.max
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 class SimpleComposableActivity : ComponentActivity() {
@@ -62,6 +106,8 @@ class SimpleComposableActivity : ComponentActivity() {
         setContent {
             ScreenContent()
         }
+//        val keyboardHeight = WindowInsets.ime.getBottom(LocalDensity.current)
+//        val isVisible = WindowInsets.isImeVisible
 
 //        setContent {
 //            AndroidPlaygroundTheme {
@@ -75,6 +121,102 @@ class SimpleComposableActivity : ComponentActivity() {
 //            }
 //        }
     }
+}
+
+@Composable
+fun CustomBottomSheetPreview() {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Spacer(modifier = Modifier.weight(1F))
+
+        CustomBottomSheet {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .background(Color.Magenta)
+            )
+        }
+    }
+}
+
+enum class DragAnchors {
+    Start,
+    End
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun CustomBottomSheet(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val density = LocalDensity.current
+
+    val state = remember {
+        AnchoredDraggableState(
+            initialValue = DragAnchors.Start,
+            positionalThreshold = { distance: Float -> distance * 0.5f },
+            velocityThreshold = { with(density) { 60.dp.toPx() } },
+            animationSpec = spring(),
+        )
+    }
+    LaunchedEffect(state) {
+        snapshotFlow { state.currentValue }
+            .distinctUntilChanged()
+            .collect { stage ->
+                if (stage == DragAnchors.End) {
+                    println("AAA Closed!")
+                }
+            }
+    }
+    Box(
+        modifier = modifier
+            .offset {
+                IntOffset(
+                    x = 0,
+                    y = state
+                        .requireOffset()
+                        .roundToInt()
+                )
+            }
+            .anchoredDraggable(
+                state = state,
+                orientation = Orientation.Vertical
+            )
+            .onSizeChanged { sheetSize ->
+                state.updateAnchors(
+                    DraggableAnchors {
+                        DragAnchors.Start at 0f
+                        DragAnchors.End at sheetSize.height.toFloat()
+                    }
+                )
+            }
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun AutoFocusingText(
+    modifier: Modifier = Modifier,
+    value: Float,
+) {
+    val focusRequester = remember { FocusRequester() }
+    var text by remember { mutableStateOf(value.toString()) }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    TextField(
+        value = text,
+        onValueChange = { text = it },
+        modifier = modifier.focusRequester(focusRequester),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+    )
+
 }
 
 data class Message(val author: String, val body: String, val isMe: Boolean = false)
@@ -373,5 +515,122 @@ fun BorderExampleComposable(modifier: Modifier = Modifier) {
                     }
                 }
         )
+    }
+}
+
+@Composable
+fun ToggleableItem(modifier: Modifier = Modifier) {
+    var selected by remember {
+        mutableStateOf(false)
+    }
+    val stateEnabled = "Enabled"
+    val stateDisabled = "Disabled"
+    Row(
+        modifier = modifier
+            .semantics {
+                stateDescription = if (selected) {
+                    stateEnabled
+                } else {
+                    stateDisabled
+                }
+            }
+            .toggleable(
+                value = selected,
+                onValueChange = {
+                    selected = !selected
+                },
+                role = Role.Checkbox,
+            )
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Icon(
+            imageVector = Icons.Default.ContactMail,
+            contentDescription = null,
+            modifier = Modifier.size(56.dp)
+        )
+        Text(
+            text = "Hello World Hello World Hello World Hello World",
+            modifier = Modifier
+                .padding(8.dp)
+                .weight(1F)
+        )
+        Checkbox(checked = selected, onCheckedChange = null)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ToggleableItemPreview() {
+    AndroidPlaygroundTheme {
+        ToggleableItem(
+            Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun AnimatedBackground() {
+    val infiniteTransition = rememberInfiniteTransition(label = "infiniteAnimation")
+    // Creates a Color animation as a part of the [InfiniteTransition].
+    val color by infiniteTransition.animateColor(
+        initialValue = Color.Red,
+        targetValue = Color(0xff800000), // Dark Red
+        animationSpec = infiniteRepeatable(
+            // Linearly interpolate between initialValue and targetValue every 1000ms.
+            animation = tween(1000, easing = LinearEasing),
+            // Once [TargetValue] is reached, starts the next iteration in reverse (i.e. from
+            // TargetValue to InitialValue). Then again from InitialValue to TargetValue. This
+            // [RepeatMode] ensures that the animation value is *always continuous*.
+            repeatMode = RepeatMode.Reverse
+        ), label = "colorAnimation"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .drawBehind {
+                // Change color only during Draw phase, without causing recomposition
+                drawRect(color)
+            }
+    )
+}
+
+@Preview
+@Composable
+private fun AnimatedBackgroundPreview() {
+    AndroidPlaygroundTheme {
+        AnimatedBackground()
+    }
+}
+
+@Composable
+fun CustomBottomGravityDialog(
+    modifier: Modifier = Modifier
+) {
+    AndroidPlaygroundTheme {
+        var showDialog by remember {
+            mutableStateOf(true)
+        }
+
+        if (showDialog) {
+            Dialog(
+                properties = DialogProperties(
+                    usePlatformDefaultWidth = false,
+                ),
+                onDismissRequest = { showDialog = false }
+            ) {
+                val dialogWindowProvider =
+                    LocalView.current.parent as DialogWindowProvider
+                dialogWindowProvider.window.setGravity(Gravity.BOTTOM)
+                dialogWindowProvider.window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+                AutoFocusingText(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = 20f
+                )
+            }
+        }
     }
 }
