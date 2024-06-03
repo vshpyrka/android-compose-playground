@@ -1,6 +1,7 @@
 plugins {
     alias(pluginLibs.plugins.android.library)
     alias(pluginLibs.plugins.kotlin.android)
+    alias(pluginLibs.plugins.kotlin.compose)
 }
 
 android {
@@ -17,10 +18,6 @@ android {
     buildFeatures {
         viewBinding = true
         compose = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.11"
     }
 
     buildTypes {
