@@ -16,7 +16,6 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
         compose = true
     }
 
@@ -45,6 +44,13 @@ android {
     }
 }
 
+composeCompiler {
+    enableStrongSkippingMode = true
+    stabilityConfigurationFile = project.rootDir.resolve("compose_compiler_config.conf")
+    metricsDestination = layout.buildDirectory.dir("compose-metrics")
+    reportsDestination = layout.buildDirectory.dir("compose-metrics")
+}
+
 dependencies {
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
@@ -62,6 +68,15 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.material.icons)
     implementation(libs.lifecycle.compose)
+    implementation(libs.compose.navigation)
+
+    implementation(libs.coil)
+    implementation(libs.coil.compose)
+
+    // For AppWidgets support
+    implementation(libs.glance.appwidget)
+    // For interop APIs with Material 3
+    implementation(libs.glance.material)
 
     // Android Studio Preview support
 

@@ -33,6 +33,33 @@
         <activity
             android:name="com.example.compose.CodeLabAdvancedLayoutsActivity"
             android:exported="false" />
+        <activity android:name="com.example.compose.ComposeInsetsActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+        <activity android:name="com.example.compose.ComposePhotoGridActivity"
+            android:exported="false" />
+        <activity android:name="com.example.compose.ComposeNavigationActivity"
+            android:exported="false" />
+        <activity android:name="com.example.compose.ComposeInteractionSourceActivity"
+            android:exported="false" />
+        <activity android:name="com.example.compose.NestedScrollingModifierActivity"
+            android:exported="false" />
+        <activity android:name="com.example.compose.ConstraintsModifiersActivity"
+            android:exported="false" />
+
+        <receiver
+            android:name="com.example.compose.widget.GlanceComposeAppWidgetReceiver"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_widget_info" />
+        </receiver>
+
     </application>
 
 </manifest>
