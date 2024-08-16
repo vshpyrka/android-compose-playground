@@ -46,7 +46,7 @@ android {
 
 composeCompiler {
     enableStrongSkippingMode = true
-    stabilityConfigurationFile = project.rootDir.resolve("compose_compiler_config.conf")
+//    stabilityConfigurationFile = project.rootDir.resolve("compose_compiler_config.conf")
     metricsDestination = layout.buildDirectory.dir("compose-metrics")
     reportsDestination = layout.buildDirectory.dir("compose-metrics")
 }

@@ -46,6 +46,8 @@
             android:exported="false" />
         <activity android:name="com.example.compose.ConstraintsModifiersActivity"
             android:exported="false" />
+        <activity android:name="com.example.compose.ComposePagerActivity"
+            android:exported="false" />
 
         <receiver
             android:name="com.example.compose.widget.GlanceComposeAppWidgetReceiver"
