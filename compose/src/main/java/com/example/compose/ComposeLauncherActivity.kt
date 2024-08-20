@@ -37,6 +37,7 @@ class ComposeLauncherActivity : ComponentActivity() {
             "Nested scrolling" to NestedScrollingModifierActivity::class,
             "Constraints Modifiers" to ConstraintsModifiersActivity::class,
             "Compose Pager" to ComposePagerActivity::class,
+            "Compose Flow" to ComposeFlowActivity::class,
         )
         setContent {
             val context = LocalContext.current
