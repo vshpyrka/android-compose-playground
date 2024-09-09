@@ -10,8 +10,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Indication
-import androidx.compose.foundation.IndicationInstance
+import androidx.compose.foundation.IndicationNodeFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.DragInteraction
@@ -30,11 +29,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,11 +54,14 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.node.DelegatableNode
+import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.sign
@@ -92,7 +94,7 @@ private fun SimpleInteractionLayout() {
             .clickable(
                 onClick = {},
                 interactionSource = interactionSource,
-                indication = rememberRipple()
+                indication = ripple()
             ),
         contentAlignment = Alignment.Center,
     ) {
@@ -197,7 +199,9 @@ private fun ScaledIndicationButton() {
     }
 }
 
-private class ScaleIndicationInstance : IndicationInstance {
+private class ScaleIndicationInstance(
+    private val interactionSource: InteractionSource
+) : Modifier.Node(), DrawModifierNode {
 
     var currentPressedPosition: Offset = Offset.Zero
     val animatedScalePercent = Animatable(1f)
@@ -211,40 +215,45 @@ private class ScaleIndicationInstance : IndicationInstance {
         animatedScalePercent.animateTo(1f, spring())
     }
 
-    override fun ContentDrawScope.drawIndication() {
-        scale(
-            scale = animatedScalePercent.value,
-            pivot = currentPressedPosition
-        ) {
-            this@drawIndication.drawContent()
-        }
-    }
-}
-
-private object ScaleIndication : Indication {
-
-    @Composable
-    override fun rememberUpdatedInstance(interactionSource: InteractionSource): IndicationInstance {
-        val instance = remember(interactionSource) { ScaleIndicationInstance() }
-        LaunchedEffect(interactionSource) {
-            interactionSource.interactions.collect { interaction ->
+    override fun onAttach() {
+        super.onAttach()
+        coroutineScope.launch {
+            interactionSource.interactions.collectLatest { interaction ->
                 when (interaction) {
                     is PressInteraction.Press -> {
-                        instance.animateToPressed(interaction.pressPosition)
+                        animateToPressed(interaction.pressPosition)
                     }
 
                     is PressInteraction.Release -> {
-                        instance.animateToResting()
+                        animateToResting()
                     }
 
                     is PressInteraction.Cancel -> {
-                        instance.animateToResting()
+                        animateToResting()
                     }
                 }
             }
         }
-        return instance
     }
+
+    override fun ContentDrawScope.draw() {
+        scale(
+            scale = animatedScalePercent.value,
+            pivot = currentPressedPosition
+        ) {
+            this@draw.drawContent()
+        }
+    }
+}
+
+private object ScaleIndication : IndicationNodeFactory {
+    override fun create(interactionSource: InteractionSource): DelegatableNode {
+        return ScaleIndicationInstance(interactionSource)
+    }
+
+    override fun hashCode(): Int = -1
+
+    override fun equals(other: Any?) = other === this
 }
 
 @Composable
@@ -286,35 +295,22 @@ private fun NeonIndicationButton() {
 private class NeonIndication(
     private val shape: Shape,
     private val borderWidth: Dp,
-) : Indication {
+) : IndicationNodeFactory {
 
-    @Composable
-    override fun rememberUpdatedInstance(interactionSource: InteractionSource): IndicationInstance {
-        val instance = remember {
-            NeonIndicationInstance(shape, borderWidth * 2)
-        }
-        LaunchedEffect(interactionSource) {
-            interactionSource.interactions.collect { interaction ->
-                when (interaction) {
-                    is PressInteraction.Press -> instance.animateToPressed(
-                        interaction.pressPosition,
-                        this
-                    )
-
-                    is PressInteraction.Release -> instance.animateToResting(this)
-                    is PressInteraction.Cancel -> instance.animateToResting(this)
-                }
-            }
-        }
-        return instance
+    override fun create(interactionSource: InteractionSource): DelegatableNode {
+        return NeonIndicationInstance(shape, borderWidth * 2, interactionSource)
     }
 
+    override fun hashCode(): Int = -1
+
+    override fun equals(other: Any?) = other === this
 }
 
 private class NeonIndicationInstance(
     private val shape: Shape,
     private val borderWidth: Dp,
-) : IndicationInstance {
+    private val interactionSource: InteractionSource,
+) : Modifier.Node(), DrawModifierNode {
 
     var currentPressPosition: Offset = Offset.Zero
     val animatedProgress = Animatable(0f)
@@ -346,7 +342,24 @@ private class NeonIndicationInstance(
         }
     }
 
-    override fun ContentDrawScope.drawIndication() {
+    override fun onAttach() {
+        super.onAttach()
+        coroutineScope.launch {
+            interactionSource.interactions.collectLatest { interaction ->
+                when (interaction) {
+                    is PressInteraction.Press -> animateToPressed(
+                        interaction.pressPosition,
+                        this
+                    )
+
+                    is PressInteraction.Release -> animateToResting(this)
+                    is PressInteraction.Cancel -> animateToResting(this)
+                }
+            }
+        }
+    }
+
+    override fun ContentDrawScope.draw() {
         val (startPosition, endPosition) = calculateGradientStartAndEndFromPressPosition(
             currentPressPosition, size
         )

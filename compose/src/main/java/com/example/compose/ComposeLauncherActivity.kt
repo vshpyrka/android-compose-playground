@@ -38,6 +38,7 @@ class ComposeLauncherActivity : ComponentActivity() {
             "Constraints Modifiers" to ConstraintsModifiersActivity::class,
             "Compose Pager" to ComposePagerActivity::class,
             "Compose Flow" to ComposeFlowActivity::class,
+            "Compose Brush" to ComposeBrushActivity::class,
         )
         setContent {
             val context = LocalContext.current

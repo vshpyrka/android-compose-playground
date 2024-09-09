@@ -14,6 +14,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -159,7 +160,8 @@ fun CustomBottomSheet(
             initialValue = DragAnchors.Start,
             positionalThreshold = { distance: Float -> distance * 0.5f },
             velocityThreshold = { with(density) { 60.dp.toPx() } },
-            animationSpec = spring(),
+            snapAnimationSpec = spring(),
+            decayAnimationSpec = exponentialDecay(),
         )
     }
     LaunchedEffect(state) {
