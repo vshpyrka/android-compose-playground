@@ -236,7 +236,7 @@ fun BorderModifiedTextField(
     )
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun CursorColorChangeTextFieldPreview() {
     AndroidPlaygroundTheme {
