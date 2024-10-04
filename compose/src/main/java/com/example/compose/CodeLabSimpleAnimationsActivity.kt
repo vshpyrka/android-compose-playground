@@ -3,6 +3,7 @@ package com.example.compose
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Animatable
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
@@ -12,12 +13,15 @@ import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -25,7 +29,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,11 +37,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,9 +55,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,19 +65,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.compose.ui.theme.AndroidPlaygroundTheme
-import kotlin.random.Random
 
 class CodeLabSimpleAnimationsActivity : ComponentActivity() {
 
@@ -83,13 +86,14 @@ class CodeLabSimpleAnimationsActivity : ComponentActivity() {
 
         setContent {
             AndroidPlaygroundTheme {
-                Column {
-                    BubbleMessage()
-                    AnimatedLongText()
-                    AnimatedContentExample()
-                    ProgressIndicatorAnimationExample()
-                    AnimatedImageBorder()
-                }
+                AnimateOffsetExample()
+//                Column {
+//                    BubbleMessage()
+//                    AnimatedLongText()
+//                    AnimatedContentExample()
+//                    ProgressIndicatorAnimationExample()
+//                    AnimatedImageBorder()
+//                }
             }
         }
     }
@@ -515,17 +519,106 @@ fun HeroContainer(
     }
 }
 
+@Composable
+private fun AnimateOffsetExample() {
+    var clicked by remember { mutableStateOf(false) }
+    val offset by animateIntOffsetAsState(
+        targetValue = if (clicked) {
+            IntOffset(100, 100)
+        } else {
+            IntOffset.Zero
+        },
+        label = "offset_anim"
+    )
+    Box(
+        modifier = Modifier
+            .size(150.dp)
+            .offset {
+                offset
+            }
+            .clickable {
+                clicked = !clicked
+            }
+            .background(Color.Magenta)
+    )
+}
 
+@Preview(showSystemUi = true)
+@Composable
+private fun AnimateOffsetExamplePreview() {
+    AndroidPlaygroundTheme {
+        AnimateOffsetExample()
+    }
+}
 
+enum class BoxState {
+    Collapsed,
+    Expanded,
+}
 
+@Composable
+private fun TransitionAnimationExample() {
+    var currentState by remember { mutableStateOf(BoxState.Collapsed) }
+    val transition = updateTransition(
+        targetState = currentState,
+        label = "transition"
+    )
+    val size by transition.animateDp(label = "rect") { state ->
+        when (state) {
+            BoxState.Collapsed -> 100.dp
+            BoxState.Expanded -> 300.dp
+        }
+    }
+    val rotate by transition.animateFloat(label = "rotate") { state ->
+        when (state) {
+            BoxState.Collapsed -> 0f
+            BoxState.Expanded -> 45f
+        }
+    }
+    Box(
+        modifier = Modifier
+            .size(size)
+            .graphicsLayer {
+                rotationZ = rotate
+            }
+            .background(Color.Magenta)
+            .clickable {
+                currentState = BoxState.Expanded
+            }
+    )
+}
 
+@Preview(showSystemUi = true)
+@Composable
+private fun TransitionAnimationExamplePreview() {
+    AndroidPlaygroundTheme {
+        Box(Modifier.fillMaxSize()) {
+            TransitionAnimationExample()
+        }
+    }
+}
 
+@Composable
+private fun AnimateOnLaunchExample() {
+    val color = remember { Animatable(Color.Gray) }
+    var open by remember { mutableStateOf(false) }
+    LaunchedEffect(open) {
+        color.animateTo(if (open) Color.Green else Color.Red)
+    }
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(color.value)
+            .clickable {
+                open = true
+            }
+    )
+}
 
-
-
-
-
-
-
-
-
+@Preview(showSystemUi = true)
+@Composable
+private fun AnimateOnLaunchExamplePreview() {
+    AndroidPlaygroundTheme {
+        AnimateOnLaunchExample()
+    }
+}

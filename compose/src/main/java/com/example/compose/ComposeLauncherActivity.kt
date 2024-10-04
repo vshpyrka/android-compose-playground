@@ -39,6 +39,7 @@ class ComposeLauncherActivity : ComponentActivity() {
             "Compose Pager" to ComposePagerActivity::class,
             "Compose Flow" to ComposeFlowActivity::class,
             "Compose Brush" to ComposeBrushActivity::class,
+            "Shared Element Transition" to SharedElementTransitionActivity::class,
         )
         setContent {
             val context = LocalContext.current

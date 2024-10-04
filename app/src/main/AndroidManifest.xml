@@ -5,6 +5,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="Android Compose Playground"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@style/AppTheme"
         tools:targetApi="tiramisu">
 
