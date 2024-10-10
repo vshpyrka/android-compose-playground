@@ -13,10 +13,13 @@ import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.Spring.DampingRatioHighBouncy
+import androidx.compose.animation.core.Spring.StiffnessVeryLow
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntOffsetAsState
+import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -24,17 +27,24 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -49,6 +59,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +71,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,13 +83,16 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import com.example.compose.ui.theme.AndroidPlaygroundTheme
+import kotlinx.coroutines.launch
 
 class CodeLabSimpleAnimationsActivity : ComponentActivity() {
 
@@ -86,13 +101,14 @@ class CodeLabSimpleAnimationsActivity : ComponentActivity() {
 
         setContent {
             AndroidPlaygroundTheme {
-                AnimateOffsetExample()
+                ComplexAnimationExample()
 //                Column {
 //                    BubbleMessage()
 //                    AnimatedLongText()
 //                    AnimatedContentExample()
 //                    ProgressIndicatorAnimationExample()
 //                    AnimatedImageBorder()
+//                    AnimateOffsetExample()
 //                }
             }
         }
@@ -393,7 +409,7 @@ fun AnimatedImageBorder(
         painter = painterResource(id = R.drawable.fc3_stress_and_anxiety),
         contentDescription = null,
         contentScale = ContentScale.Crop,
-        modifier = Modifier
+        modifier = modifier
             .size(150.dp)
             .padding(8.dp)
             .drawBehind {
@@ -622,3 +638,156 @@ private fun AnimateOnLaunchExamplePreview() {
         AnimateOnLaunchExample()
     }
 }
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ComplexAnimationExample() {
+    Box {
+        var drawerState by remember {
+            mutableStateOf(DrawerValue.Closed)
+        }
+        val translationX = remember {
+            androidx.compose.animation.core.Animatable(0f)
+        }
+        val drawerWidth = 300.dp.dpToPx()
+        translationX.updateBounds(0f, drawerWidth)
+
+
+        val cScope = rememberCoroutineScope()
+        val draggableState = rememberDraggableState { dragAmount ->
+            cScope.launch {
+                translationX.snapTo(translationX.value + dragAmount)
+            }
+        }
+        val decay = rememberSplineBasedDecay<Float>()
+
+        val anchors = DraggableAnchors {
+            DrawerValue.Open at drawerWidth
+            DrawerValue.Closed at 0f
+        }
+        val density = LocalDensity.current
+        val state = remember {
+            AnchoredDraggableState(
+                initialValue = DrawerValue.Closed,
+                anchors = anchors,
+                positionalThreshold = { distance: Float -> distance * 0.5f },
+                snapAnimationSpec = spring(
+                    dampingRatio = DampingRatioHighBouncy,
+                    stiffness = StiffnessVeryLow,
+                ),
+                velocityThreshold = {
+                    with(density) { 80.dp.toPx() }
+                },
+                decayAnimationSpec = exponentialDecay()
+            )
+        }
+        HomeScreenDrawer()
+        HomeScreenContent(
+            modifier = Modifier
+                .graphicsLayer {
+                    
+                    // V1
+//                    this.translationX =
+//                        if (drawerState == DrawerValue.Open) drawerWidth.toPx() else 0f
+//                    this.scaleX = if (drawerState == DrawerValue.Open) 0.8f else 1f
+//                    this.scaleY = if (drawerState == DrawerValue.Open) 0.8f else 1f
+//                    val roundedCorners = if (drawerState == DrawerValue.Open) 32.dp else 0.dp
+
+                    // V2
+//                    this.translationX = translationX.value
+//                    val scale = lerp(
+//                        start = 1f,
+//                        stop = 0.8f,
+//                        fraction = translationX.value / drawerWidth
+//                    )
+//                    this.scaleX = scale
+//                    this.scaleY = scale
+//                    val roundedCorners = lerp(0f, 32.dp.toPx(), translationX.value / drawerWidth)
+
+                    // V3
+                    this.translationX = state.requireOffset()
+                    val scale = lerp(1f, 0.8f, state.requireOffset() / drawerWidth)
+                    this.scaleX = scale
+                    this.scaleY = scale
+                    val roundedCorners = lerp(0f, 32.dp.toPx(), state.requireOffset() / drawerWidth)
+
+                    this.shape = RoundedCornerShape(roundedCorners)
+                    this.clip = true
+                    this.shadowElevation = 4.dp.toPx()
+                }
+                .anchoredDraggable(
+                    state = state,
+                    orientation = Orientation.Horizontal,
+                )
+            /*
+            .draggable(
+                state = draggableState,
+                orientation = Orientation.Horizontal,
+                onDragStopped = { velocity ->
+                    val decayX = decay.calculateTargetValue(
+                        initialValue = translationX.value,
+                        initialVelocity = velocity,
+                    )
+                    cScope.launch {
+                        val targetX = if (decayX > (drawerWidth * 0.5)) {
+                            drawerWidth
+                        } else {
+                            0f
+                        }
+                        val canReachTargetWithDecay =
+                            (decayX > targetX && targetX == drawerWidth)
+                                    || (decayX < targetX && targetX == 0f)
+                        if (canReachTargetWithDecay) {
+                            translationX.animateDecay(
+                                initialVelocity = velocity,
+                                animationSpec = decay
+                            )
+                        } else {
+                            translationX.animateTo(
+                                targetValue = targetX,
+                                initialVelocity = velocity
+                            )
+                        }
+                        drawerState = if (targetX == drawerWidth) {
+                            DrawerValue.Open
+                        } else {
+                            DrawerValue.Closed
+                        }
+                    }
+                }
+                )
+                */
+                .clickable {
+                    drawerState = DrawerValue.Open
+                }
+        )
+    }
+}
+
+@Composable
+private fun HomeScreenDrawer(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .width(300.dp)
+            .background(Color.Magenta)
+    )
+}
+
+@Composable
+private fun HomeScreenContent(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.LightGray)
+    )
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun ComplexAnimationExamplePreview() {
+    AndroidPlaygroundTheme {
+        ComplexAnimationExample()
+    }
+}
+
