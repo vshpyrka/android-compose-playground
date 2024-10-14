@@ -54,6 +54,8 @@
             android:exported="false" />
         <activity android:name="com.example.compose.SharedElementTransitionActivity"
             android:exported="false" />
+        <activity android:name="com.example.compose.anim.GoogleAnimSamples"
+            android:exported="false" />
 
         <receiver
             android:name="com.example.compose.widget.GlanceComposeAppWidgetReceiver"
