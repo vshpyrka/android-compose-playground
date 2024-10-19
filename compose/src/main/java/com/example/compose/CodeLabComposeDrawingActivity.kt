@@ -36,8 +36,16 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.toSize
 import com.example.compose.ui.theme.AndroidPlaygroundTheme
 import com.example.compose.ui.theme.Purple40
 
@@ -56,6 +64,40 @@ class CodeLabComposeDrawingActivity : ComponentActivity() {
             }
         }
     }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun TextMeasurerExample() {
+    AndroidPlaygroundTheme {
+        MeasuredTextExample()
+    }
+}
+
+@Composable
+private fun MeasuredTextExample() {
+    val textMeasurer = rememberTextMeasurer()
+    Spacer(
+        modifier = Modifier
+            .drawWithCache {
+
+                val measuredText = textMeasurer.measure(
+                    LoremIpsum(40).values.first(),
+                    constraints = Constraints.fixed(
+                        width = (size.width * 2 / 3).toInt(),
+                        height = (size.width * 2 / 3).toInt(),
+                    ),
+                    style = TextStyle(fontSize = 18.sp),
+                    overflow = TextOverflow.Ellipsis,
+                )
+
+                onDrawBehind {
+                    drawRect(Color.Magenta, size = measuredText.size.toSize())
+                    drawText(measuredText)
+                }
+            }
+            .fillMaxSize()
+    )
 }
 
 @Preview(showBackground = true)
@@ -92,9 +134,11 @@ private fun SimpleDrawWithContentPreview() {
 fun SimpleDrawWithContent() {
     Column(
         modifier = Modifier.drawWithContent {
-            // Helps to choose when the content should be drawn
-            drawCircle(Color.Green)
-            drawContent()
+            rotate(45f) {
+                // Helps to choose when the content should be drawn
+                drawCircle(Color.Green)
+                this@drawWithContent.drawContent()
+            }
         }
     ) {
         Text(
@@ -178,15 +222,18 @@ fun ScaledCanvas() {
                 size = quadrantSize,
             )
         }
-        withTransform({
-            translate(left = size.width / 50f, top = size.height / 2)
-            rotate(degrees = 45f)
-        }) {
-            drawRect(
-                color = Color.Cyan,
-                size = size / 3f,
-            )
-        }
+        withTransform(
+            transformBlock = {
+                translate(left = size.width / 50f, top = size.height / 2)
+                rotate(degrees = 45f)
+            },
+            drawBlock = {
+                drawRect(
+                    color = Color.Cyan,
+                    size = size / 3f,
+                )
+            }
+        )
     }
 }
 
@@ -208,7 +255,7 @@ fun generatePath(size: Size): Path {
     path.lineTo(170f, size.height - 30)
     path.lineTo(size.width / 3, size.height - 300)
     path.lineTo(size.width / 2, size.height / 2)
-    path.lineTo( 3 * (size.width / 4), 3 * (size.height / 4))
+    path.lineTo(3 * (size.width / 4), 3 * (size.height / 4))
     path.lineTo(size.width, 0f)
     return path
 }
