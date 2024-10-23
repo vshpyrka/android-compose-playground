@@ -12,13 +12,16 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -30,12 +33,15 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.graphics.LinearGradientShader
+import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.ContentScale
@@ -195,6 +201,28 @@ private fun ImageSaturationExample() {
     )
 }
 
+@Composable
+private fun SizedBrushExample() {
+    val listColors = listOf(Color.Yellow, Color.Red, Color.Blue)
+    val customBrush = remember {
+        object : ShaderBrush() {
+            override fun createShader(size: Size): Shader {
+                return LinearGradientShader(
+                    colors = listColors,
+                    from = Offset.Zero,
+                    to = Offset(size.width / 4f, 0f),
+                    tileMode = TileMode.Mirror,
+                )
+            }
+
+        }
+    }
+    Box(
+        Modifier
+            .requiredSize(200.dp)
+            .background(customBrush))
+}
+
 @Preview
 @Composable
 private fun ImageBrushExamplePreview() {
@@ -232,5 +260,13 @@ private fun AnimatedShaderBackgroundPreview() {
 private fun ImageSaturationExamplePreview() {
     AndroidPlaygroundTheme {
         ImageSaturationExample()
+    }
+}
+
+@Preview
+@Composable
+private fun SizedBrushExamplePreview() {
+    AndroidPlaygroundTheme {
+        SizedBrushExample()
     }
 }
