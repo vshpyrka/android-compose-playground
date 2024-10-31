@@ -42,6 +42,7 @@ class ComposeLauncherActivity : ComponentActivity() {
             "Compose Brush" to ComposeBrushActivity::class,
             "Shared Element Transition" to SharedElementTransitionActivity::class,
             "Google Anim Samples" to GoogleAnimSamples::class,
+            "Accessibility" to ComposeAccessibilityActivity::class,
         )
         setContent {
             val context = LocalContext.current
