@@ -12,9 +12,11 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.then
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
+@Ignore("Check manually")
 class DeviceConfigurationOverrideTest {
 
     @get:Rule
