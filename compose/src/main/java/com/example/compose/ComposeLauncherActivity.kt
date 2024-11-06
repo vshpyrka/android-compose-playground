@@ -43,6 +43,7 @@ class ComposeLauncherActivity : ComponentActivity() {
             "Shared Element Transition" to SharedElementTransitionActivity::class,
             "Google Anim Samples" to GoogleAnimSamples::class,
             "Accessibility" to ComposeAccessibilityActivity::class,
+            "Touch And Input" to TouchInputActivity::class,
         )
         setContent {
             val context = LocalContext.current
