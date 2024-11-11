@@ -9,6 +9,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -61,6 +62,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.onLongClick
@@ -78,6 +80,42 @@ class ComposePhotoGridActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val photos = listOf(
+            R.drawable.ab1_inversions,
+            R.drawable.ab2_quick_yoga,
+            R.drawable.ab3_stretching,
+            R.drawable.ab4_tabata,
+            R.drawable.ab5_hiit,
+            R.drawable.ab6_pre_natal_yoga,
+            R.drawable.fc1_short_mantras,
+            R.drawable.fc2_nature_meditations,
+            R.drawable.fc3_stress_and_anxiety,
+            R.drawable.fc4_self_massage,
+            R.drawable.fc5_overwhelmed,
+            R.drawable.fc6_nightly_wind_down,
+            R.drawable.ab1_inversions,
+            R.drawable.ab2_quick_yoga,
+            R.drawable.ab3_stretching,
+            R.drawable.ab4_tabata,
+            R.drawable.ab5_hiit,
+            R.drawable.ab6_pre_natal_yoga,
+            R.drawable.fc1_short_mantras,
+            R.drawable.fc2_nature_meditations,
+            R.drawable.fc3_stress_and_anxiety,
+            R.drawable.fc4_self_massage,
+            R.drawable.fc5_overwhelmed,
+            R.drawable.fc6_nightly_wind_down,
+            R.drawable.ab1_inversions,
+            R.drawable.ab2_quick_yoga,
+            R.drawable.ab3_stretching,
+            R.drawable.ab4_tabata,
+            R.drawable.ab5_hiit,
+            R.drawable.ab6_pre_natal_yoga,
+            R.drawable.fc1_short_mantras,
+            R.drawable.fc2_nature_meditations,
+            R.drawable.fc3_stress_and_anxiety,
+            R.drawable.fc4_self_massage,
+            R.drawable.fc5_overwhelmed,
+            R.drawable.fc6_nightly_wind_down,
             R.drawable.ab1_inversions,
             R.drawable.ab2_quick_yoga,
             R.drawable.ab3_stretching,
@@ -149,7 +187,6 @@ fun App(photos: List<Photo>) {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PhotoGrid(
     photos: List<Photo>,
@@ -187,26 +224,28 @@ private fun PhotoGrid(
                             }
                         }
                     }
-                    .then(if (inSelectionMode) {
-                        Modifier.toggleable(
-                            value = selected,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null, // do not show a ripple
-                            onValueChange = {
-                                if (it) {
-                                    selectedIds += photo.id
-                                } else {
-                                    selectedIds -= photo.id
+                    .then(
+                        if (inSelectionMode) {
+                            Modifier.toggleable(
+                                value = selected,
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null, // do not show a ripple
+                                onValueChange = {
+                                    if (it) {
+                                        selectedIds += photo.id
+                                    } else {
+                                        selectedIds -= photo.id
+                                    }
                                 }
-                            }
-                        )
-                    } else {
-//            Modifier.clickable { navigateToPhoto(photo.id) }
-                        Modifier.combinedClickable(
-                            onClick = { navigateToPhoto(photo.id) },
-                            onLongClick = { selectedIds += photo.id }
-                        )
-                    })
+                            )
+                        } else {
+                            Modifier.clickable { navigateToPhoto(photo.id) }
+//                            Modifier.combinedClickable(
+//                                onClick = { navigateToPhoto(photo.id) },
+//                                onLongClick = { selectedIds += photo.id }
+//                            )
+                        }
+                    )
             )
         }
     }
@@ -306,6 +345,7 @@ private fun PhotoItem(
             Image(
                 painter = rememberAsyncImagePainter(photo.url),
                 contentDescription = null,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .matchParentSize()
                     .padding(padding)
@@ -378,7 +418,7 @@ private fun Scrim(onClose: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 fun PhotoImage(photo: Photo, modifier: Modifier = Modifier) {
     var offset by remember { mutableStateOf(Offset.Zero) }
-    var zoom by remember { mutableStateOf(1f) }
+    var zoom by remember { mutableFloatStateOf(1f) }
 
     Image(
         painter = rememberAsyncImagePainter(model = photo.highResUrl),
@@ -395,7 +435,7 @@ fun PhotoImage(photo: Photo, modifier: Modifier = Modifier) {
             }
             .pointerInput(Unit) {
                 detectTransformGestures(
-                    onGesture = { centroid, pan, gestureZoom, _ ->
+                    onGesture = { centroid, pan, gestureZoom, rotation ->
                         offset = offset.calculateNewOffset(
                             centroid, pan, zoom, gestureZoom, size
                         )
@@ -406,7 +446,8 @@ fun PhotoImage(photo: Photo, modifier: Modifier = Modifier) {
             .graphicsLayer {
                 translationX = -offset.x * zoom
                 translationY = -offset.y * zoom
-                scaleX = zoom; scaleY = zoom
+                scaleX = zoom
+                scaleY = zoom
                 transformOrigin = TransformOrigin(0f, 0f)
             }
             .aspectRatio(1f)
