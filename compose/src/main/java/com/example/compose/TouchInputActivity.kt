@@ -1,17 +1,27 @@
 package com.example.compose
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipDescription
+import android.graphics.DashPathEffect
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.KeyboardShortcutGroup
 import android.view.KeyboardShortcutInfo
 import android.view.Menu
+import android.view.MotionEvent
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.draganddrop.dragAndDropSource
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.Orientation
@@ -33,35 +43,56 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.handwriting.handwritingDetector
+import androidx.compose.foundation.text.handwriting.handwritingHandler
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.DragAndDropTransferData
+import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusDirection
@@ -71,7 +102,14 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toComposePathEffect
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
@@ -83,14 +121,19 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.util.fastAny
+import androidx.compose.ui.window.Dialog
 import com.example.compose.ui.theme.AndroidPlaygroundTheme
 import kotlin.math.roundToInt
 
@@ -99,8 +142,10 @@ class TouchInputActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Column {
-                ChangeFocusAdvancingDirection()
+            Scaffold { paddings ->
+                Column(Modifier.padding(paddings)) {
+                    StylusMotionEvent()
+                }
             }
         }
     }
@@ -468,7 +513,6 @@ private fun ScrollableSample() {
     }
 }
 
-
 @Composable
 private fun DrawCircleInCenterGesture() {
     var centroidSize by remember { mutableFloatStateOf(0f) }
@@ -606,9 +650,12 @@ private fun MultipleGesturesDetection() {
                 .size(200.dp)
                 .background(Color.Magenta)
                 .pointerInput(Unit) {
-                    detectTapGestures {
-                        println("AAA Tap")
-                    }
+                    detectTapGestures(
+                        onDoubleTap = { println("AAA onDoubleTap $it") },
+                        onLongPress = { println("AAA onLongPress $it") },
+                        onPress = { println("AAA onPress $it") },
+                        onTap = { println("AAA onTap $it") },
+                    )
                 }
                 .pointerInput(Unit) {
                     detectDragGestures { change, amount ->
@@ -660,5 +707,319 @@ private fun LogPointerEvents() {
                 }
                 .background(Color.Magenta)
         )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Preview
+@Composable
+private fun DragAndDropExample() {
+
+    val label = remember { "Drag me" }
+
+    val color = Color.Blue
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .size(150.dp)
+                .align(Alignment.TopStart)
+                .dragAndDropSource(
+//                    drawDragDecoration = {
+//                        drawCircle(color, 150.dp.toPx())
+//                    },
+                    block = {
+                        detectTapGestures(
+                            onLongPress = {
+                                startTransfer(
+                                    DragAndDropTransferData(
+                                        clipData = ClipData.newPlainText(
+                                            label,
+                                            label
+                                        ),
+                                        flags = View.DRAG_FLAG_GLOBAL,
+                                    )
+                                )
+                            }
+                        )
+                    }
+                )
+                .background(color)
+
+        ) {
+            Button(onClick = {}) {
+                Text("Hello World")
+            }
+        }
+
+        val callback = remember {
+            object : DragAndDropTarget {
+                override fun onStarted(event: DragAndDropEvent) {
+                    // When the drag event starts
+                    println("AAA onStarted $event")
+                }
+
+                override fun onEntered(event: DragAndDropEvent) {
+                    // When the dragged object enters the target surface
+                    println("AAA onEntered $event")
+                }
+
+                override fun onEnded(event: DragAndDropEvent) {
+                    // When the drag event stops
+                    println("AAA onEnded $event")
+                }
+
+                override fun onExited(event: DragAndDropEvent) {
+                    // When the dragged object exits the target surface
+                    println("AAA onExited $event")
+                }
+
+                override fun onDrop(event: DragAndDropEvent): Boolean {
+                    // Parse received data
+                    println("AAA onDrop $event")
+                    return true
+                }
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .size(300.dp)
+                .align(Alignment.BottomEnd)
+                .background(Color.Green)
+                .dragAndDropTarget(
+                    shouldStartDragAndDrop = { event ->
+                        event.mimeTypes().contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
+                    },
+                    callback,
+                )
+        )
+    }
+}
+
+@Composable
+fun HandwritingDetectorSample() {
+    var openDialog by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+
+    Column(
+        Modifier
+            .imePadding()
+            .requiredWidth(300.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            "This is not an actual text field, but it is a handwriting detector so you can use " +
+                    "a stylus to write here."
+        )
+        Spacer(Modifier.size(16.dp))
+        Text(
+            "Fake text field",
+            Modifier
+                .fillMaxWidth()
+                .handwritingDetector { openDialog = !openDialog }
+                .padding(4.dp)
+                .border(
+                    1.dp,
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                    RoundedCornerShape(4.dp)
+                )
+                .padding(16.dp),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+        )
+    }
+
+    if (openDialog) {
+        Dialog(onDismissRequest = { openDialog = false }) {
+            Card(modifier = Modifier.width(300.dp), shape = RoundedCornerShape(16.dp)) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("This text field is a handwriting handler.")
+                    Spacer(Modifier.size(16.dp))
+                    val state = remember { TextFieldState() }
+                    BasicTextField(
+                        state = state,
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
+                            .handwritingHandler(),
+                        decorator = { innerTextField ->
+                            Box(
+                                Modifier
+                                    .padding(4.dp)
+                                    .border(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.onSurface,
+                                        RoundedCornerShape(4.dp)
+                                    )
+                                    .padding(16.dp)
+                            ) {
+                                innerTextField()
+                            }
+                        }
+                    )
+                }
+            }
+
+            val windowInfo = LocalWindowInfo.current
+            LaunchedEffect(windowInfo) {
+                snapshotFlow { windowInfo.isWindowFocused }
+                    .collect { isWindowFocused ->
+                        if (isWindowFocused) {
+                            focusRequester.requestFocus()
+                        }
+                    }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+private fun StylusMotionEvent() {
+
+    Box {
+        var path by remember {
+            mutableStateOf(Path())
+        }
+
+        var hoverOffset by remember {
+            mutableStateOf(Offset.Unspecified)
+        }
+
+        var isStylus by remember { mutableStateOf(false) }
+        var stylusAxisX by remember { mutableFloatStateOf(0f) }
+        var stylusAxisY by remember { mutableFloatStateOf(0f) }
+        var stylusPressure by remember { mutableFloatStateOf(0f) }
+        var stylusOrientation by remember { mutableFloatStateOf(0f) }
+        var stylusTilt by remember { mutableFloatStateOf(0f) }
+        var stylusDistance by remember { mutableFloatStateOf(0f) }
+
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInteropFilter { event ->
+                    isStylus = event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS
+                    stylusAxisX = event.getAxisValue(MotionEvent.AXIS_X)
+                    stylusAxisY = event.getAxisValue(MotionEvent.AXIS_Y)
+                    stylusPressure = event.getAxisValue(MotionEvent.AXIS_PRESSURE)
+                    stylusOrientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION)
+                    stylusTilt = event.getAxisValue(MotionEvent.AXIS_TILT)
+                    stylusDistance = event.getAxisValue(MotionEvent.AXIS_DISTANCE)
+//                    println("AAA x=$x y=$y pressure=$pressure orientation=$orientation tilt=$tilt distance=$distance")
+
+                    println("AAA ${event.action}")
+                    when (event.action) {
+                        MotionEvent.ACTION_DOWN,
+                        MotionEvent.ACTION_POINTER_DOWN -> {
+                            println("AAA Down")
+                            path.moveTo(event.x, event.y)
+                        }
+
+                        MotionEvent.ACTION_MOVE -> {
+                            println("AAA Move pointerCount=${event.pointerCount}")
+                            path.lineTo(event.x, event.y)
+                        }
+
+                        MotionEvent.ACTION_UP,
+                        MotionEvent.ACTION_POINTER_UP -> {
+                            println("AAA Up")
+                            path = Path().apply { reset(); addPath(path) }
+                        }
+
+                        MotionEvent.ACTION_CANCEL -> {
+                            println("AAA action cancel")
+                        }
+
+                        MotionEvent.FLAG_CANCELED -> {
+                            println("AAA flag cancelled")
+                        }
+
+                        MotionEvent.ACTION_HOVER_ENTER,
+                        MotionEvent.ACTION_HOVER_MOVE -> {
+                            hoverOffset = Offset(event.x, event.y)
+                        }
+
+                        MotionEvent.ACTION_HOVER_EXIT -> {
+                            hoverOffset = Offset.Unspecified
+                        }
+                    }
+
+                    true
+                }
+//            .pointerInput(Unit) {
+//                awaitEachGesture {
+//                    while(true) {
+//                        val event = awaitPointerEvent()
+//                        event.changes.forEach {
+//                            println("AAA $it")
+//                        }
+//                    }
+//                }
+//            }
+        ) {
+            println("AAA Draw")
+            drawPath(
+                path,
+                brush = SolidColor(Color.Magenta),
+                style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+            )
+
+            if (hoverOffset != Offset.Unspecified) {
+                drawCircle(
+                    color = Color.Blue,
+                    center = hoverOffset,
+                    radius = 30.dp.toPx()
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(30.dp)
+        ) {
+            val text = "Stylus\n" +
+                    "isStylus=$isStylus\n" +
+                    "axisX=$stylusAxisX\n" +
+                    "axisY=$stylusAxisY\n" +
+                    "stylusPressure=$stylusPressure\n" +
+                    "stylusOrientation=$stylusOrientation\n" +
+                    "stylusTilt=$stylusTilt\n" +
+                    "stylusDistance=$stylusDistance\n"
+            Text(
+                text = text,
+                style = TextStyle(fontSize = 4.em)
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun TestPreview() {
+    AndroidPlaygroundTheme {
+        Canvas(
+            Modifier.fillMaxSize()
+        ) {
+            val path = PathParser().parsePathString("M 0,0 500,0 500,500 0,500 z").toPath()
+            drawPath(
+                path,
+                color = Color.Magenta,
+                style = Stroke(
+                    width = 10f,
+                    pathEffect = DashPathEffect(
+                        floatArrayOf(5f, 5f),
+                        0f
+                    ).toComposePathEffect()
+                )
+            )
+        }
     }
 }

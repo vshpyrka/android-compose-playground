@@ -71,6 +71,9 @@ dependencies {
     implementation(libs.lifecycle.compose)
     implementation(libs.compose.navigation)
 
+    implementation("androidx.graphics:graphics-core:1.0.2")
+    implementation("androidx.input:input-motionprediction:1.0.0-beta05")
+
     implementation(libs.coil)
     implementation(libs.coil.compose)
 
@@ -78,8 +81,6 @@ dependencies {
     implementation(libs.glance.appwidget)
     // For interop APIs with Material 3
     implementation(libs.glance.material)
-
-    // Android Studio Preview support
 
     implementation(libs.compose.tooling.preview)
     debugImplementation(libs.compose.tooling)

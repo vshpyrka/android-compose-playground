@@ -16,9 +16,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,15 +34,19 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -61,6 +69,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
@@ -79,10 +88,8 @@ class CodeLabComposeDrawingActivity : ComponentActivity() {
 
         setContent {
             AndroidPlaygroundTheme {
-                Column {
-                    SimpleDrawSpacer(Modifier.size(150.dp))
-                    SimpleDrawWithContent()
-                    SimpleCanvasDraw()
+                FadingEdgeDemo(Modifier) {
+                    AvatarsExample()
                 }
             }
         }
@@ -626,5 +633,203 @@ private fun LayerToBitmap() {
 private fun LayerToBitmapPreview() {
     AndroidPlaygroundTheme {
         LayerToBitmap()
+    }
+}
+
+private fun Modifier.blendMode(blendMode: BlendMode): Modifier {
+    return this.drawWithCache {
+        val graphicsLayer = obtainGraphicsLayer()
+        graphicsLayer.apply {
+            record {
+                drawContent()
+            }
+            this.blendMode = blendMode
+        }
+        onDrawWithContent {
+            drawLayer(graphicsLayer)
+        }
+    }
+}
+
+private fun Modifier.colorFilter(colorFilter: ColorFilter): Modifier {
+    return this.drawWithCache {
+        val graphicsLayer = obtainGraphicsLayer()
+        graphicsLayer.apply {
+            record {
+                drawContent()
+            }
+            this.colorFilter = colorFilter
+        }
+        onDrawWithContent {
+            drawLayer(graphicsLayer)
+        }
+    }
+}
+
+@Composable
+private fun GraphicsLayerExample() {
+    Box(
+        modifier = Modifier.background(Color.Magenta),
+        contentAlignment = Alignment.Center
+    ) {
+
+        Image(
+            modifier = Modifier.fillMaxSize(),
+            painter = painterResource(R.drawable.fc2_nature_meditations),
+            contentDescription = null,
+        )
+
+        Text(
+            color = Color.White,
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier
+                .blendMode(BlendMode.Clear),
+            textAlign = TextAlign.Center,
+            text = "Hello World",
+        )
+    }
+}
+
+@Composable
+private fun GraphicsLayerExample2() {
+    Box(
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            modifier = Modifier
+                .fillMaxSize()
+                .colorFilter(
+                    ColorFilter.colorMatrix(
+                        ColorMatrix()
+                            .apply {
+                                setToSaturation(0f)
+                            }
+                    )
+                ),
+            painter = painterResource(R.drawable.fc2_nature_meditations),
+            contentDescription = null,
+        )
+
+        Text(
+            color = Color.White,
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier
+                .blendMode(BlendMode.Difference),
+            textAlign = TextAlign.Center,
+            text = "Hello World",
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun GraphicsLayerExamplePreview() {
+    AndroidPlaygroundTheme {
+        GraphicsLayerExample()
+    }
+}
+
+@Preview
+@Composable
+private fun GraphicsLayerExample2Preview() {
+    AndroidPlaygroundTheme {
+        GraphicsLayerExample2()
+    }
+}
+
+@Composable
+private fun Avatar(
+    strokeWidth: Float,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val stroke = remember(strokeWidth) {
+        Stroke(width = strokeWidth)
+    }
+    Box(
+        modifier = modifier
+            .drawWithContent {
+                drawContent()
+                drawCircle(
+                    color = Color.Black,
+                    size.minDimension / 2,
+                    size.center,
+                    style = stroke,
+                    blendMode = BlendMode.Clear,
+                )
+            }
+            .clip(CircleShape)
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun AvatarsExample() {
+    val avatars = listOf(
+        R.drawable.fc1_short_mantras,
+        R.drawable.fc2_nature_meditations,
+        R.drawable.fc3_stress_and_anxiety,
+        R.drawable.fc4_self_massage,
+        R.drawable.fc5_overwhelmed,
+        R.drawable.fc6_nightly_wind_down,
+    )
+    val size = 150.dp
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Magenta)
+            .graphicsLayer {
+                compositingStrategy = CompositingStrategy.Offscreen
+            }
+    ) {
+        var offset = 0.dp
+        for (avatar in avatars) {
+            Avatar(
+                strokeWidth = 10.0f,
+                modifier = Modifier
+                    .size(150.dp)
+                    .offset(offset)
+            ) {
+                Image(
+                    painter = painterResource(id = avatar),
+                    contentScale = ContentScale.Crop,
+                    contentDescription = null,
+                )
+            }
+            offset += size / 2
+        }
+    }
+}
+
+@Composable
+private fun FadingEdgeDemo(
+    modifier: Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                compositingStrategy = CompositingStrategy.Offscreen
+            }
+            .drawWithContent {
+                drawContent()
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        listOf(Color.Black, Color.Transparent),
+                    ),
+                    blendMode = BlendMode.DstIn
+                )
+            }
+    ) {
+        content()
+    }
+}
+
+@Preview
+@Composable
+private fun AvatarExamplePreview() {
+    AndroidPlaygroundTheme {
+        AvatarsExample()
     }
 }
