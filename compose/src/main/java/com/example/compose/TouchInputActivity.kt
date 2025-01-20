@@ -4,7 +4,10 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipDescription
 import android.graphics.DashPathEffect
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.view.KeyEvent
 import android.view.KeyboardShortcutGroup
 import android.view.KeyboardShortcutInfo
@@ -20,6 +23,12 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.content.MediaType
+import androidx.compose.foundation.content.ReceiveContentListener
+import androidx.compose.foundation.content.TransferableContent
+import androidx.compose.foundation.content.consume
+import androidx.compose.foundation.content.contentReceiver
+import androidx.compose.foundation.content.hasMediaType
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.focusGroup
@@ -39,6 +48,7 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +57,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -65,6 +76,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.handwriting.handwritingDetector
 import androidx.compose.foundation.text.handwriting.handwritingHandler
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
@@ -84,6 +97,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -123,18 +137,25 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.window.Dialog
+import coil.compose.AsyncImage
 import com.example.compose.ui.theme.AndroidPlaygroundTheme
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 class TouchInputActivity : ComponentActivity() {
@@ -144,7 +165,7 @@ class TouchInputActivity : ComponentActivity() {
         setContent {
             Scaffold { paddings ->
                 Column(Modifier.padding(paddings)) {
-                    StylusMotionEvent()
+                    RichContentClipboardExample()
                 }
             }
         }
@@ -1021,5 +1042,208 @@ private fun TestPreview() {
                 )
             )
         }
+    }
+}
+
+
+@Composable
+private fun SelectableTextContainer() {
+    Card {
+        Column {
+            SelectionContainer {
+                Text(
+                    modifier = Modifier.padding(16.dp),
+                    text = LoremIpsum(40).values.first()
+                )
+            }
+
+            Text(
+                modifier = Modifier.padding(16.dp),
+                text = LoremIpsum(40).values.first()
+            )
+        }
+    }
+}
+
+@Composable
+private fun ClipboardExample() {
+    val clipboardManager = LocalClipboardManager.current
+
+    Button(
+        onClick = {
+            clipboardManager.setText(
+                buildAnnotatedString {
+                    append("Copied text")
+                }
+            )
+        }
+    ) {
+        Text("Click to copy text to ClipboardManager")
+    }
+}
+
+@Composable
+private fun ClipboardEntryExample() {
+    val clipboardManager = LocalClipboardManager.current
+
+    Column {
+
+        var text by remember { mutableStateOf("Default text") }
+
+        Button(
+            onClick = {
+                val clipData = ClipData.newPlainText("text label", "Copied text")
+                val clip = ClipEntry(clipData)
+                clipboardManager.setClip(clip)
+            }
+        ) {
+            Text("Click to copy text to ClipboardManager")
+        }
+
+        Button(
+            onClick = {
+                text = clipboardManager.getText().toString()
+            }
+        ) {
+            Text("Paste copied text")
+        }
+
+        TextField(
+            value = text,
+            onValueChange = {}
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun RichContentClipboardExample() {
+
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
+    var images by remember { mutableStateOf<List<Uri>>(emptyList()) }
+
+    var dragging by remember { mutableStateOf(false) }
+    var hovering by remember { mutableStateOf(false) }
+
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+
+    val receiveContentListener = remember {
+        object : ReceiveContentListener {
+
+            override fun onDragStart() {
+                super.onDragStart()
+                dragging = true
+            }
+
+            override fun onDragEnd() {
+                super.onDragEnd()
+                hovering = false
+                dragging = false
+            }
+
+            override fun onDragEnter() {
+                super.onDragEnter()
+                hovering = true
+            }
+
+            override fun onDragExit() {
+                super.onDragExit()
+                hovering = false
+            }
+
+            override fun onReceive(transferableContent: TransferableContent): TransferableContent? {
+                return when {
+                    transferableContent.hasMediaType(MediaType.Image) -> {
+                        transferableContent.consume { item ->
+                            val uri = item.uri
+                            if (uri != null) {
+                                images += uri
+
+                                coroutineScope.launch {
+                                    scrollState.animateScrollTo(scrollState.maxValue)
+                                }
+                            }
+                            uri != null
+                        }
+                    }
+
+                    else -> transferableContent
+                }
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Button(
+            onClick = {
+                val clipData = ClipData.newUri(
+                    context.contentResolver,
+                    "label",
+                    Uri.parse("https://developer.android.com/static/images/design/ui/large-screens-banner_2880.png")
+                )
+                clipData.addItem(ClipData.Item(Uri.parse("https://developer.android.com/static/images/design/ui/promo-widgets_2880.png")))
+                val clip = ClipEntry(clipData)
+                clipboardManager.setClip(clip)
+            }
+        ) {
+            Text("Click to copy text to ClipboardManager")
+        }
+
+        Button(
+            onClick = {
+                val clipData = ClipData
+                    .newPlainText("password", "1234567890")
+                    .apply {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            description.extras = PersistableBundle().apply {
+                                putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+                            }
+                        } else {
+                            description.extras = PersistableBundle().apply {
+                                putBoolean("android.content.extra.IS_SENSITIVE", true)
+                            }
+                        }
+                    }
+                val clipEntry = ClipEntry(clipData)
+                clipboardManager.setClip(clipEntry)
+            }
+        ) {
+            Text("Copy password")
+        }
+
+        Row(
+            modifier = Modifier
+                .padding(bottom = 8.dp)
+                .fillMaxWidth()
+                .horizontalScroll(scrollState),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            images.forEach { uri ->
+                AsyncImage(
+                    model = uri,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+        val state = rememberTextFieldState("")
+
+        BasicTextField(
+            modifier = Modifier
+                .contentReceiver(receiveContentListener)
+                .fillMaxWidth()
+                .height(60.dp),
+            state = state,
+            textStyle = TextStyle(color = Color.Black, fontSize = 18.sp),
+        )
     }
 }

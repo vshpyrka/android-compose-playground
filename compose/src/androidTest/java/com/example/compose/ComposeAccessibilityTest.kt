@@ -1,6 +1,7 @@
 package com.example.compose
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
@@ -20,7 +21,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsOff
@@ -173,5 +177,27 @@ class ComposeAccessibilityTest {
                 it.config.getOrNull(SemanticsActions.OnClick)?.label == "Click"
             }
         )
+    }
+
+    val PickedDateKey = SemanticsPropertyKey<Long>("PickedDate")
+    var SemanticsPropertyReceiver.pickedDate by PickedDateKey
+
+    @Test
+    fun testCustomSemanticsKey() {
+        rule.setContent {
+            AndroidPlaygroundTheme {
+                Box(
+                    modifier = Modifier
+                        .semantics {
+                            pickedDate = 1234567890
+                        }
+                ) {
+                    Text("Hello World")
+                }
+            }
+        }
+        rule
+            .onNode(SemanticsMatcher.expectValue(PickedDateKey, 1234567890))
+            .assertExists()
     }
 }

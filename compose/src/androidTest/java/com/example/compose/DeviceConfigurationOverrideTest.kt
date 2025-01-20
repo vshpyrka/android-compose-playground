@@ -22,8 +22,18 @@ class DeviceConfigurationOverrideTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    /*
+        DeviceConfigurationOverride.DarkMode()
+        DeviceConfigurationOverride.FontScale()
+        DeviceConfigurationOverride.FontWeightAdjustment()
+        DeviceConfigurationOverride.ForcedSize()
+        DeviceConfigurationOverride.LayoutDirection()
+        DeviceConfigurationOverride.Locales()
+        DeviceConfigurationOverride.RoundScreen()
+     */
+
     @Test
-    fun forcedSize() {
+    fun testForcedSize() {
         composeTestRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.ForcedSize(DpSize(1280.dp, 800.dp))
@@ -35,7 +45,7 @@ class DeviceConfigurationOverrideTest {
     }
 
     @Test
-    fun then() {
+    fun testForcedFontScaleWeightAdjustment() {
         composeTestRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.FontScale(1.5f) then
