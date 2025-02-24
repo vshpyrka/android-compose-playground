@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_widget_configurable">Glance Configurable Widget</string>
+    <string name="app_widget_configurable_description">Example of Glance Configurable Widget</string>
+    <string name="app_widget_non_resizable">Glance Non-Resizable Widget</string>
+    <string name="app_widget_non_resizable_description">Example of Glance Non-Resizable Widget</string>
+    <string name="app_widget_resizable">Glance Resizable Widget</string>
+    <string name="app_widget_resizable_description">Example of Glance Resizable Widget</string>
+    <string name="app_widget_composition_error">Glance Composition Error Widget</string>
+    <string name="app_widget_composition_error_description">Example of Glance Composition Error Widget</string>
+    <string name="app_widget_glance_example">Default Glance Widget</string>
+    <string name="app_widget_glance_example_description">Example of Default Glance Widget</string>
+    <string name="app_widget_pinned_example">Pinned Glance Widget</string>
+    <string name="app_widget_pinned_example_description">Example of Pinned Glance Widget</string>
+</resources>

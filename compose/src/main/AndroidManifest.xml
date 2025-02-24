@@ -33,37 +33,127 @@
         <activity
             android:name="com.example.compose.CodeLabAdvancedLayoutsActivity"
             android:exported="false" />
-        <activity android:name="com.example.compose.ComposeInsetsActivity"
-            android:windowSoftInputMode="adjustResize"
+        <activity
+            android:name="com.example.compose.ComposeInsetsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="com.example.compose.ComposePhotoGridActivity"
             android:exported="false" />
-        <activity android:name="com.example.compose.ComposePhotoGridActivity"
+        <activity
+            android:name="com.example.compose.ComposeNavigationActivity"
             android:exported="false" />
-        <activity android:name="com.example.compose.ComposeNavigationActivity"
+        <activity
+            android:name="com.example.compose.ComposeInteractionSourceActivity"
             android:exported="false" />
-        <activity android:name="com.example.compose.ComposeInteractionSourceActivity"
+        <activity
+            android:name="com.example.compose.NestedScrollingModifierActivity"
             android:exported="false" />
-        <activity android:name="com.example.compose.NestedScrollingModifierActivity"
+        <activity
+            android:name="com.example.compose.ConstraintsModifiersActivity"
             android:exported="false" />
-        <activity android:name="com.example.compose.ConstraintsModifiersActivity"
+        <activity
+            android:name="com.example.compose.ComposePagerActivity"
             android:exported="false" />
-        <activity android:name="com.example.compose.ComposePagerActivity"
+        <activity
+            android:name="com.example.compose.ComposeFlowActivity"
             android:exported="false" />
-        <activity android:name="com.example.compose.ComposeFlowActivity"
+        <activity
+            android:name="com.example.compose.ComposeBrushActivity"
             android:exported="false" />
-        <activity android:name="com.example.compose.ComposeBrushActivity"
+        <activity
+            android:name="com.example.compose.SharedElementTransitionActivity"
             android:exported="false" />
-        <activity android:name="com.example.compose.SharedElementTransitionActivity"
+        <activity
+            android:name="com.example.compose.anim.GoogleAnimSamples"
             android:exported="false" />
-        <activity android:name="com.example.compose.anim.GoogleAnimSamples"
+        <activity
+            android:name="com.example.compose.ComposeAccessibilityActivity"
             android:exported="false" />
-        <activity android:name="com.example.compose.ComposeAccessibilityActivity"
-            android:exported="false" />
-        <activity android:name="com.example.compose.TouchInputActivity"
+        <activity
+            android:name="com.example.compose.TouchInputActivity"
             android:exported="false" />
 
         <receiver
-            android:name="com.example.compose.widget.GlanceComposeAppWidgetReceiver"
-            android:exported="true">
+            android:name="com.example.compose.widget.simple.GlanceAppWidgetReceiver"
+            android:exported="true"
+            android:label="@string/app_widget_glance_example">
+
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.compose.widget.action.APPWIDGET_ERROR" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.example.compose.widget.error.GlanceAppComposeErrorWidgetReceiver"
+            android:exported="true"
+            android:label="@string/app_widget_composition_error">
+
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.compose.widget.action.APPWIDGET_ERROR" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_widget_error_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.example.compose.widget.configurable.GlanceAppConfigurableWidgetReceiver"
+            android:exported="true"
+            android:label="@string/app_widget_configurable">
+
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE_OPTIONS" />
+                <action android:name="com.example.compose.widget.action.APPWIDGET_ERROR" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_configurable_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.example.compose.widget.tiny.GlanceAppTinyWidgetReceiver"
+            android:exported="true"
+            android:label="@string/app_widget_non_resizable">
+
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.compose.widget.action.APPWIDGET_ERROR" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_tiny_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.example.compose.widget.resizable.GlanceAppResizableWidgetReceiver"
+            android:exported="true"
+            android:label="@string/app_widget_resizable">
+
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.compose.widget.action.APPWIDGET_ERROR" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_resizable_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.example.compose.widget.pinned.GlanceAppPinnedWidgetReceiver"
+            android:exported="true"
+            android:label="@string/app_widget_pinned_example">
 
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -71,8 +161,39 @@
 
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/app_widget_info" />
+                android:resource="@xml/app_pinned_widget_info" />
         </receiver>
+
+        <activity
+            android:name="com.example.compose.widget.simple.GlanceWidgetActivity"
+            android:exported="true" />
+
+        <activity
+            android:name="com.example.compose.widget.error.GlanceWidgetErrorActivity"
+            android:exported="true" />
+
+        <activity
+            android:name="com.example.compose.widget.configurable.GlanceWidgetConfigActivity"
+            android:exported="true"
+            android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name=".widget.pinned.GlanceAppPinResultWidgetReceiver"
+            android:exported="true">
+
+        </receiver>
+
+        <activity
+            android:name="com.example.compose.widget.pinned.GlancePinnedWidgetActivity"
+            android:exported="true" />
+
+        <activity
+            android:name="com.example.compose.widget.pinned.GlancePinnedWidgetConfigActivity"
+            android:exported="true" />
 
     </application>
 

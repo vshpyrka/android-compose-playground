@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:configure="com.example.compose.widget.configurable.GlanceWidgetConfigActivity"
+    android:description="@string/app_widget_configurable_description"
     android:initialLayout="@layout/glance_default_loading_layout"
-    android:description="@string/app_widget_glance_example_description"
+    android:maxResizeWidth="512dp"
+    android:maxResizeHeight="512dp"
     android:minWidth="128dp"
     android:minHeight="128dp"
     android:minResizeWidth="128dp"
     android:minResizeHeight="128dp"
-    android:previewImage="@drawable/ic_heart_broken"
+    android:previewLayout="@layout/glance_app_configurable_widget_layout"
     android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
     android:updatePeriodMillis="3600000"
-    android:widgetCategory="home_screen"
+    android:widgetCategory="home_screen|keyguard"
     android:widgetFeatures="reconfigurable">
 
 </appwidget-provider>

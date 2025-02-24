@@ -43,10 +43,15 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    testOptions {
+        unitTests {
+            animationsDisabled = true
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 composeCompiler {
-    enableStrongSkippingMode = true
 //    stabilityConfigurationFile = project.rootDir.resolve("compose_compiler_config.conf")
     metricsDestination = layout.buildDirectory.dir("compose-metrics")
     reportsDestination = layout.buildDirectory.dir("compose-metrics")
@@ -79,14 +84,23 @@ dependencies {
 
     // For AppWidgets support
     implementation(libs.glance.appwidget)
+    implementation("androidx.glance:glance-preview:1.1.1")
+    implementation("androidx.glance:glance-appwidget-preview:1.1.1")
     // For interop APIs with Material 3
     implementation(libs.glance.material)
 
     implementation(libs.compose.tooling.preview)
-    debugImplementation(libs.compose.tooling)
 
+    debugImplementation(libs.compose.tooling)
+    debugImplementation(testLibs.compose.test.manifest)
+
+    // Unit Tests
+    testImplementation(testLibs.glance)
+    testImplementation(testLibs.glance.appwidget)
+    testImplementation(testLibs.robolectric)
+    testImplementation(testLibs.android.junit.ktx)
+    testImplementation(testLibs.compose.test.junit)
     // UI Tests
     androidTestImplementation(testLibs.compose.test.junit)
-    debugImplementation(testLibs.compose.test.manifest)
 }
 
