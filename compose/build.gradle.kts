@@ -61,7 +61,6 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
 
-
     implementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.bom)
 
@@ -82,22 +81,12 @@ dependencies {
     implementation(libs.coil)
     implementation(libs.coil.compose)
 
-    // For AppWidgets support
-    implementation(libs.glance.appwidget)
-    implementation("androidx.glance:glance-preview:1.1.1")
-    implementation("androidx.glance:glance-appwidget-preview:1.1.1")
-    // For interop APIs with Material 3
-    implementation(libs.glance.material)
-
     implementation(libs.compose.tooling.preview)
 
     debugImplementation(libs.compose.tooling)
     debugImplementation(testLibs.compose.test.manifest)
 
     // Unit Tests
-    testImplementation(testLibs.glance)
-    testImplementation(testLibs.glance.appwidget)
-    testImplementation(testLibs.robolectric)
     testImplementation(testLibs.android.junit.ktx)
     testImplementation(testLibs.compose.test.junit)
     // UI Tests
