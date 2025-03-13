@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
-import com.example.compose.anim.GoogleAnimSamples
 
 class ComposeLauncherActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +42,6 @@ class ComposeLauncherActivity : ComponentActivity() {
             "Compose Flow" to ComposeFlowActivity::class,
             "Compose Brush" to ComposeBrushActivity::class,
             "Shared Element Transition" to SharedElementTransitionActivity::class,
-            "Google Anim Samples" to GoogleAnimSamples::class,
             "Accessibility" to ComposeAccessibilityActivity::class,
             "Touch And Input" to TouchInputActivity::class,
         )

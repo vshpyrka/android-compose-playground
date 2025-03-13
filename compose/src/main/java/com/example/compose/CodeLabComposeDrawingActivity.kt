@@ -1,9 +1,21 @@
 package com.example.compose
 
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.RenderEffect
+import android.graphics.RuntimeShader
+import android.graphics.Shader
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -20,9 +32,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,12 +58,15 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -74,12 +92,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import com.example.compose.ui.theme.AndroidPlaygroundTheme
 import com.example.compose.ui.theme.Purple40
 import kotlinx.coroutines.launch
+import org.intellij.lang.annotations.Language
+import kotlin.math.roundToInt
 
 class CodeLabComposeDrawingActivity : ComponentActivity() {
 
@@ -831,5 +852,320 @@ private fun FadingEdgeDemo(
 private fun AvatarExamplePreview() {
     AndroidPlaygroundTheme {
         AvatarsExample()
+    }
+}
+
+@Preview
+@Composable
+private fun RenderBlurEffectExample() {
+    AndroidPlaygroundTheme {
+        Box {
+            Image(
+                modifier = Modifier.graphicsLayer {
+                    renderEffect = BlurEffect(
+                        radiusX = 50f,
+                        radiusY = 0f,
+                        edgeTreatment = TileMode.Mirror,
+                    )
+                },
+                painter = painterResource(R.drawable.fc3_stress_and_anxiety),
+                contentDescription = null
+            )
+        }
+    }
+}
+
+
+/*
+    ColorMatrix Filter
+
+    4 x 5 matrix
+
+    | a b c d e |
+    | f g h i j |
+    | k l m n o |
+    | p q r s t |
+
+    R = a*R + b*G + c*B + d*A + e (red color chanel of the resulting pixel)
+    G = f*R + g*G + h*B + i*A + j
+    B = k*R + l*G + m*B + n*A + o
+    A = p*R + q*G + r*B + s*A + t
+
+    Invert matrix:
+
+    | -1 0 0 0 255 |
+    | 0 -1 0 0 255 |
+    | 0 0 -1 0 255 |
+    | 0 0 0 -1 0   |
+
+    R = -1*R + 0*G + 0*B + 0*A + 255
+    G = 0*R + -1*G + 0*B + 0*A + 255
+    B = 0*R + 0*G + -1*B + 0*A + 255
+    A = 0*R + 0*G + 0*B + -1*A + 0
+ */
+
+@Preview
+@Composable
+private fun ColorMatrixRenderEffectExample() {
+    AndroidPlaygroundTheme {
+        val invertedColorFilter = ColorMatrixColorFilter(
+            android.graphics.ColorMatrix(
+                floatArrayOf(
+                    //              R    G   B   A    +
+                    /* RED */      -1f, 0f, 0f, 0f, 255f,
+                    /* Green */    0f, -1f, 0f, 0f, 255f,
+                    /* Blue */     0f, 0f, -1f, 0f, 255f,
+                    /* Alpha */    0f, 0f, 0f, 1f, 0f,
+                )
+            )
+        )
+        val grayScaleMatrixFilter = ColorMatrixColorFilter(
+            android.graphics.ColorMatrix(
+                floatArrayOf(
+                    //              R     G     B     A   +
+                    /* RED */      0.3f, 0.3f, 0.3f, 0f, 0f,
+                    /* Green */    0.3f, 0.3f, 0.3f, 0f, 0f,
+                    /* Blue */     0.3f, 0.3f, 0.3f, 0f, 0f,
+                    /* Alpha */    0f, 0f, 0f, 1f, 0f,
+                )
+            )
+        )
+        Column {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                Image(
+                    modifier = Modifier.graphicsLayer {
+                        val effect = RenderEffect.createColorFilterEffect(invertedColorFilter)
+                            .asComposeRenderEffect()
+                        renderEffect = effect
+                    },
+                    painter = painterResource(R.drawable.fc3_stress_and_anxiety),
+                    contentDescription = null
+                )
+                Image(
+                    modifier = Modifier.graphicsLayer {
+                        val effect = RenderEffect.createColorFilterEffect(grayScaleMatrixFilter)
+                            .asComposeRenderEffect()
+                        renderEffect = effect
+                    },
+                    painter = painterResource(R.drawable.fc3_stress_and_anxiety),
+                    contentDescription = null
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LiquidBottomNavigationUiExample() {
+    AndroidPlaygroundTheme {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val effect = remember {
+                val alphaMatrix = ColorMatrixColorFilter(
+                    android.graphics.ColorMatrix(
+                        floatArrayOf(
+                            //              R   G   B   A   +
+                            /* RED */      1f, 0f, 0f, 0f, 0f,
+                            /* Green */    0f, 1f, 0f, 0f, 0f,
+                            /* Blue */     0f, 0f, 1f, 0f, 0f,
+                            /* Alpha */    0f, 0f, 0f, 50f, -5000f
+                        )
+                    )
+                )
+                val alphaMatrixEffect = RenderEffect.createColorFilterEffect(alphaMatrix)
+                val blurEffect = RenderEffect
+                    .createBlurEffect(80f, 80f, Shader.TileMode.MIRROR)
+                RenderEffect
+                    .createChainEffect(alphaMatrixEffect, blurEffect)
+                    .asComposeRenderEffect()
+            }
+
+            val infiniteTransition = rememberInfiniteTransition(label = "translate transition")
+            val translateAnimation = infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    tween(2000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse,
+                ),
+                label = "translate animation"
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        renderEffect = effect
+                    }
+            ) {
+                val itemPadding = 30.dp
+                val itemSize = 100.dp
+                Box {
+                    Canvas(
+                        modifier = Modifier
+                            .padding(20.dp)
+                            .size(itemSize)
+                    ) {
+                        drawCircle(Color.Cyan)
+                    }
+                }
+                Box {
+                    Canvas(
+                        modifier = Modifier
+                            .padding(20.dp)
+                            .size(itemSize)
+                            .offset {
+                                IntOffset(
+                                    x = ((itemSize + itemPadding).toPx() * FastOutSlowInEasing.transform(
+                                        translateAnimation.value
+                                    ))
+                                        .roundToInt(),
+                                    y = 0,
+                                )
+                            }
+                    ) {
+                        drawCircle(Color.Cyan)
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Language("AGSL")
+const val Source = """
+    uniform shader composable;
+    
+    uniform float visibility;
+    
+    half4 main(float2 cord) {
+        half4 color = composable.eval(cord);
+        color.a = step(visibility, color.a);
+        return color;
+    }
+"""
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Preview(showBackground = true)
+@Composable
+private fun LiquidBottomNavigationUiExample2() {
+    AndroidPlaygroundTheme {
+        val effect = remember {
+            val alphaMatrix = ColorMatrixColorFilter(
+                android.graphics.ColorMatrix(
+                    floatArrayOf(
+                        //              R   G   B   A   +
+                        /* RED */      1f, 0f, 0f, 0f, 0f,
+                        /* Green */    0f, 1f, 0f, 0f, 0f,
+                        /* Blue */     0f, 0f, 1f, 0f, 0f,
+                        /* Alpha */    0f, 0f, 0f, 50f, -5000f
+                    )
+                )
+            )
+            RenderEffect.createColorFilterEffect(alphaMatrix).asComposeRenderEffect()
+        }
+
+        val runtimeShader = remember {
+            RuntimeShader(Source)
+        }
+
+        val infiniteTransition = rememberInfiniteTransition(label = "translate transition")
+        val translateAnimation = infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                tween(2000, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "translate animation"
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+//                        renderEffect = effect
+
+                    runtimeShader.setFloatUniform("visibility", 0.2f)
+                    renderEffect = RenderEffect
+                        .createRuntimeShaderEffect(
+                            runtimeShader, "composable"
+                        )
+                        .asComposeRenderEffect()
+                },
+        ) {
+            val blurEffect = remember {
+                RenderEffect
+                    .createBlurEffect(80f, 80f, Shader.TileMode.DECAL)
+                    .asComposeRenderEffect()
+            }
+
+            val itemPadding = 30.dp
+            val itemSize = 100.dp
+            Box(
+                modifier = Modifier
+                    .size(itemSize),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            renderEffect = blurEffect
+                        },
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(color = Color.Cyan, CircleShape)
+                    )
+                }
+                Box {
+                    Icon(
+                        modifier = Modifier
+                            .size(40.dp),
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        tint = Color.White,
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .size(itemSize)
+                    .offset {
+                        IntOffset(
+                            x = ((itemSize + itemPadding).toPx() * FastOutSlowInEasing.transform(
+                                translateAnimation.value
+                            ))
+                                .roundToInt(),
+                            y = 0,
+                        )
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            renderEffect = blurEffect
+                        }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(color = Color.Cyan, CircleShape)
+                    )
+                }
+                Box {
+                    Icon(
+                        modifier = Modifier
+                            .size(40.dp),
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = Color.White,
+                    )
+                }
+            }
+        }
     }
 }

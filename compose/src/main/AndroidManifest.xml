@@ -65,9 +65,6 @@
             android:name="com.example.compose.SharedElementTransitionActivity"
             android:exported="false" />
         <activity
-            android:name="com.example.compose.anim.GoogleAnimSamples"
-            android:exported="false" />
-        <activity
             android:name="com.example.compose.ComposeAccessibilityActivity"
             android:exported="false" />
         <activity
