@@ -47,6 +47,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.example.compose.ui.theme.AndroidPlaygroundTheme
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult
+import com.google.android.apps.common.testing.accessibility.framework.integrations.espresso.AccessibilityValidator
 import org.junit.Rule
 import org.junit.Test
 
@@ -54,6 +56,10 @@ class ComposeAccessibilityTest {
 
     @get:Rule
     val rule = createComposeRule()
+
+    val accessibilityValidator = AccessibilityValidator().apply {
+        setThrowExceptionFor(AccessibilityCheckResult.AccessibilityCheckResultType.ERROR)
+    }
 
     @Test
     fun testSimpleComposable() {
@@ -99,7 +105,7 @@ class ComposeAccessibilityTest {
             useUnmergedTree = true
         ).assertExists()
 
-        rule.enableAccessibilityChecks()
+        rule.enableAccessibilityChecks(accessibilityValidator)
         rule.onRoot().tryPerformAccessibilityChecks()
 
         // Wait until something appears
