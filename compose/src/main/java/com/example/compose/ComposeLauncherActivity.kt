@@ -44,6 +44,7 @@ class ComposeLauncherActivity : ComponentActivity() {
             "Shared Element Transition" to SharedElementTransitionActivity::class,
             "Accessibility" to ComposeAccessibilityActivity::class,
             "Touch And Input" to TouchInputActivity::class,
+            "Material Expressive" to ComposeExpressiveActivity::class,
         )
         setContent {
             Scaffold { paddingValues ->

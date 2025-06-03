@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
@@ -31,11 +32,20 @@ import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.printToLog
+import androidx.compose.ui.test.tryPerformAccessibilityChecks
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.example.compose.ui.theme.AndroidPlaygroundTheme
 import org.junit.Rule
 import org.junit.Test
@@ -51,7 +61,22 @@ class ComposeAccessibilityTest {
             AndroidPlaygroundTheme {
                 Column {
                     Text(text = "Hello")
-                    Text(text = "World", modifier = Modifier.clickable { })
+                    Text(
+                        text = "World",
+                        modifier = Modifier.clickable { },
+                        fontSize = 30.sp,
+                        fontStyle = FontStyle.Italic,
+                        style = TextStyle(
+                            color = Color.Red,
+                            fontSize = 16.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.W800,
+                            fontStyle = FontStyle.Italic,
+                            letterSpacing = 0.5.em,
+                            background = Color.LightGray,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    )
                     Button(onClick = { /*TODO*/ }) {
                         Text(text = "Button", Modifier.testTag("clickableButton"))
                     }
@@ -74,6 +99,8 @@ class ComposeAccessibilityTest {
             useUnmergedTree = true
         ).assertExists()
 
+        rule.enableAccessibilityChecks()
+        rule.onRoot().tryPerformAccessibilityChecks()
 
         // Wait until something appears
 //        rule.waitUntil {

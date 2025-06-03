@@ -67,6 +67,9 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.material3.window.size)
 
+    implementation("androidx.compose.material3:material3:1.4.0-alpha15")
+    implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.4.0-alpha15")
+
     // Optional - Integration with activities
     implementation(libs.compose.activity)
 
@@ -75,7 +78,7 @@ dependencies {
     implementation(libs.lifecycle.compose)
     implementation(libs.compose.navigation)
 
-    implementation("androidx.graphics:graphics-core:1.0.2")
+    implementation("androidx.graphics:graphics-core:1.0.3")
     implementation("androidx.input:input-motionprediction:1.0.0-beta05")
 
     implementation(libs.coil)
@@ -91,5 +94,6 @@ dependencies {
     testImplementation(testLibs.compose.test.junit)
     // UI Tests
     androidTestImplementation(testLibs.compose.test.junit)
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4-accessibility:1.8.2")
 }
 
