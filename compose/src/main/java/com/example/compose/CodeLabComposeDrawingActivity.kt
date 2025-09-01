@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -101,6 +102,11 @@ import com.example.compose.ui.theme.Purple40
 import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.Language
 import kotlin.math.roundToInt
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.draw.innerShadow
+import androidx.compose.ui.graphics.drawscope.DrawScope.Companion.DefaultBlendMode
+import androidx.compose.ui.graphics.shadow.Shadow
+
 
 class CodeLabComposeDrawingActivity : ComponentActivity() {
 
@@ -1166,6 +1172,141 @@ private fun LiquidBottomNavigationUiExample2() {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
+fun SimpleDropShadowUsage() {
+    val pinkColor = Color(0xFFe91e63)
+    val purpleColor = Color(0xFF9c27b0)
+    Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .size(200.dp)
+                .align(Alignment.Center)
+                .dropShadow(
+                    shape = RoundedCornerShape(20.dp),
+                    shadow = Shadow(
+                        radius = 15.dp,
+                        color = pinkColor,
+                        spread = 10.dp,
+                        alpha = 0.5f
+                    )
+                )
+                .background(
+                    purpleColor,
+                    shape = RoundedCornerShape(20.dp)
+                )
+        )
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
+private fun SimpleDropShadowUsage2() {
+    val pinkColor = Color(0xFFe91e63)
+    val purpleColor = Color(0xFF9c27b0)
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        Box(
+            Modifier
+                .size(200.dp)
+                .align(Alignment.Center)
+                .dropShadow(
+                    shape = RoundedCornerShape(20.dp),
+                ) {
+                    radius = 15.dp.toPx()
+                    color = pinkColor
+                    spread = 10.dp.toPx()
+                    alpha = 0.5f
+                    brush = Brush.verticalGradient(
+                        listOf(pinkColor, purpleColor)
+                    )
+                    blendMode = DefaultBlendMode
+                }
+                .border(
+                    width = 1.dp,
+                    brush = Brush.verticalGradient(
+                        listOf(pinkColor, purpleColor)
+                    ),
+                    shape = RoundedCornerShape(20.dp)
+                )
+                .background(
+                    Color.Black, shape = RoundedCornerShape(20.dp)
+                )
+                .innerShadow(
+                    shape = RoundedCornerShape(20.dp),
+                ) {
+                    radius = 15.dp.toPx()
+                    color = pinkColor
+                    spread = 5.dp.toPx()
+                    alpha = 0.5f
+                    brush = Brush.verticalGradient(
+                        listOf(pinkColor, purpleColor)
+                    )
+                    blendMode = DefaultBlendMode
+                }
+        )
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
+fun SimpleInnerShadowUsage() {
+    val pinkColor = Color(0xFFe91e63)
+    val purpleColor = Color(0xFF9c27b0)
+    Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .size(200.dp)
+                .align(Alignment.Center)
+                .background(
+                    purpleColor,
+                    shape = RoundedCornerShape(20.dp)
+                )
+                .innerShadow(
+                    shape = RoundedCornerShape(20.dp),
+                    shadow = Shadow(
+                        15.dp,
+                        color = Color.Black,
+                        spread = 10.dp,
+                        alpha = 0.5f
+                    )
+                )
+        )
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
+fun PhotoInnerShadowExample() {
+    Box(Modifier.fillMaxSize()) {
+        val shape = RoundedCornerShape(20.dp)
+        Box(
+            Modifier
+                .size(200.dp)
+                .align(Alignment.Center)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.fc3_stress_and_anxiety),
+                contentDescription = "Image with Inner Shadow",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+                    .clip(shape)
+            )
+            Box(
+                modifier = Modifier.fillMaxSize()
+                    .innerShadow(
+                        shape = shape,
+                        shadow = Shadow(15.dp,
+                            spread = 15.dp)
+                    )
+            )
         }
     }
 }
