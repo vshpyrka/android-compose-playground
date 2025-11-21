@@ -70,9 +70,6 @@
         <activity
             android:name="com.example.compose.TouchInputActivity"
             android:exported="false" />
-        <activity
-            android:name="com.example.compose.ComposeExpressiveActivity"
-            android:exported="false" />
 
     </application>
 
